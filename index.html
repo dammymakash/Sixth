@@ -2,134 +2,141 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Simple To-Do List App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Reminder with Time</title>
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      background: #f4f4f4;
+    body {
+      font-family: Arial, sans-serif;
+      background: #fafafa;
       margin: 0;
-      padding: 0;
+      padding: 20px;
     }
-    .container {
+    .reminder-container {
       max-width: 400px;
-      margin: 50px auto;
+      margin: 40px auto;
       background: #fff;
-      padding: 30px 20px;
-      border-radius: 8px;
+      border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 24px 32px;
     }
-    h2 { text-align: center; }
-    #new-task {
-      width: 70%;
+    h2 {
+      text-align: center;
+      color: #444;
+    }
+    label {
+      display: block;
+      margin-top: 16px;
+      font-weight: bold;
+    }
+    input, textarea {
+      width: 100%;
+      margin-top: 6px;
       padding: 8px;
-      font-size: 16px;
-    }
-    #add-btn {
-      padding: 8px 12px;
-      font-size: 16px;
-      background: #0c87e9;
-      color: #fff;
-      border: none;
-      border-radius: 3px;
-      cursor: pointer;
-    }
-    #add-btn:hover {
-      background: #085a9c;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-      margin-top: 25px;
-    }
-    li {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #f9f9f9;
-      margin-bottom: 8px;
-      padding: 10px 8px;
       border-radius: 4px;
-      font-size: 16px;
+      border: 1px solid #bbb;
+      box-sizing: border-box;
     }
-    .delete-btn {
-      background: #ff4d4d;
-      border: none;
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 10px;
+      background: #36b37e;
       color: #fff;
-      padding: 4px 9px;
-      border-radius: 3px;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
       cursor: pointer;
-      font-size: 15px;
+      transition: background 0.2s;
     }
-    .delete-btn:hover {
-      background: #c0392b;
+    button:hover {
+      background: #259d6c;
     }
-    .completed {
-      text-decoration: line-through;
-      color: #888;
+    .reminder-message {
+      margin-top: 18px;
+      background: #e6ffe6;
+      border: 1px solid #36b37e;
+      border-radius: 4px;
+      padding: 12px;
+      display: none;
+      color: #222;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>To-Do List</h2>
-    <div>
-      <input type="text" id="new-task" placeholder="Add a new task...">
-      <button id="add-btn">Add</button>
-    </div>
-    <ul id="todo-list"></ul>
-  </div>
-  <script>
-    const input = document.getElementById('new-task');
-    const addBtn = document.getElementById('add-btn');
-    const todoList = document.getElementById('todo-list');
 
-    // Load tasks from localStorage
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+<div class="reminder-container">
+  <h2>Event Reminder</h2>
+  <form id="reminderForm">
+    <label for="eventTitle">Event Title:</label>
+    <input type="text" id="eventTitle" required placeholder="e.g. Meeting with Jane">
 
-    function renderTasks() {
-      todoList.innerHTML = '';
-      tasks.forEach((task, idx) => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-          <span class="${task.completed ? 'completed' : ''}" onclick="toggleTask(${idx})">${task.text}</span>
-          <button class="delete-btn" onclick="deleteTask(${idx})">✖</button>
-        `;
-        todoList.appendChild(li);
-      });
+    <label for="eventDateTime">Date and Time:</label>
+    <input type="datetime-local" id="eventDateTime" required>
+
+    <label for="eventNote">Note (optional):</label>
+    <textarea id="eventNote" rows="2" placeholder="Any additional details..."></textarea>
+
+    <button type="submit">Set Reminder</button>
+  </form>
+
+  <div id="reminderMessage" class="reminder-message"></div>
+</div>
+
+<script>
+  const form = document.getElementById('reminderForm');
+  const message = document.getElementById('reminderMessage');
+
+  let reminderTimeout = null;
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    // Clear any previous reminder
+    if (reminderTimeout) {
+      clearTimeout(reminderTimeout);
+      reminderTimeout = null;
     }
 
-    window.toggleTask = function(idx) {
-      tasks[idx].completed = !tasks[idx].completed;
-      saveTasks();
-      renderTasks();
-    };
+    const title = document.getElementById('eventTitle').value.trim();
+    const dateTime = document.getElementById('eventDateTime').value;
+    const note = document.getElementById('eventNote').value.trim();
+    const eventTime = new Date(dateTime);
+    const now = new Date();
 
-    window.deleteTask = function(idx) {
-      tasks.splice(idx, 1);
-      saveTasks();
-      renderTasks();
-    };
-
-    function saveTasks() {
-      localStorage.setItem('tasks', JSON.stringify(tasks));
+    if (eventTime <= now) {
+      message.style.display = 'block';
+      message.style.background = '#ffeaea';
+      message.style.borderColor = '#e33';
+      message.style.color = '#c00';
+      message.textContent = "Please select a future date and time.";
+      return;
     }
 
-    addBtn.onclick = function() {
-      const taskText = input.value.trim();
-      if (taskText) {
-        tasks.push({ text: taskText, completed: false });
-        saveTasks();
-        renderTasks();
-        input.value = '';
+    const timeUntilEvent = eventTime - now;
+
+    message.style.display = 'block';
+    message.style.background = '#e6ffe6';
+    message.style.borderColor = '#36b37e';
+    message.style.color = '#222';
+    message.innerHTML = `Reminder set for <b>${eventTime.toLocaleString()}</b>.<br>You'll be notified here!`;
+
+    reminderTimeout = setTimeout(() => {
+      let reminderText = `<strong>Event Reminder:</strong> <br> <b>${title}</b><br>`;
+      if (note) {
+        reminderText += `<em>${note}</em><br>`;
       }
-    };
+      reminderText += `<span>(${eventTime.toLocaleString()})</span>`;
 
-    input.addEventListener('keyup', function(e) {
-      if (e.key === 'Enter') addBtn.onclick();
-    });
+      message.style.display = 'block';
+      message.style.background = '#fff3cd';
+      message.style.borderColor = '#ffc107';
+      message.style.color = '#856404';
+      message.innerHTML = reminderText;
+      window.alert(`Reminder: ${title}${note ? ' - ' + note : ''}`);
+    }, timeUntilEvent);
+  });
+</script>
 
-    renderTasks();
-  </script>
 </body>
 </html>
