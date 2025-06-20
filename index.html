@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple To-Do List App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 400px;
+      margin: 50px auto;
+      background: #fff;
+      padding: 30px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h2 { text-align: center; }
+    #new-task {
+      width: 70%;
+      padding: 8px;
+      font-size: 16px;
+    }
+    #add-btn {
+      padding: 8px 12px;
+      font-size: 16px;
+      background: #0c87e9;
+      color: #fff;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    #add-btn:hover {
+      background: #085a9c;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 25px;
+    }
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f9f9f9;
+      margin-bottom: 8px;
+      padding: 10px 8px;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    .delete-btn {
+      background: #ff4d4d;
+      border: none;
+      color: #fff;
+      padding: 4px 9px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    .delete-btn:hover {
+      background: #c0392b;
+    }
+    .completed {
+      text-decoration: line-through;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>To-Do List</h2>
+    <div>
+      <input type="text" id="new-task" placeholder="Add a new task...">
+      <button id="add-btn">Add</button>
+    </div>
+    <ul id="todo-list"></ul>
+  </div>
+  <script>
+    const input = document.getElementById('new-task');
+    const addBtn = document.getElementById('add-btn');
+    const todoList = document.getElementById('todo-list');
+
+    // Load tasks from localStorage
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+    function renderTasks() {
+      todoList.innerHTML = '';
+      tasks.forEach((task, idx) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span class="${task.completed ? 'completed' : ''}" onclick="toggleTask(${idx})">${task.text}</span>
+          <button class="delete-btn" onclick="deleteTask(${idx})">✖</button>
+        `;
+        todoList.appendChild(li);
+      });
+    }
+
+    window.toggleTask = function(idx) {
+      tasks[idx].completed = !tasks[idx].completed;
+      saveTasks();
+      renderTasks();
+    };
+
+    window.deleteTask = function(idx) {
+      tasks.splice(idx, 1);
+      saveTasks();
+      renderTasks();
+    };
+
+    function saveTasks() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    addBtn.onclick = function() {
+      const taskText = input.value.trim();
+      if (taskText) {
+        tasks.push({ text: taskText, completed: false });
+        saveTasks();
+        renderTasks();
+        input.value = '';
+      }
+    };
+
+    input.addEventListener('keyup', function(e) {
+      if (e.key === 'Enter') addBtn.onclick();
+    });
+
+    renderTasks();
+  </script>
+</body>
+</html>
